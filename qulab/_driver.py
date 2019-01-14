@@ -38,6 +38,9 @@ class Quantity:
         self.driver = None
         self.set_cmd = set_cmd
         self.get_cmd = get_cmd
+        self.default = dict(value = value,
+                            unit = unit,
+                            ch = ch)
 
     def __str__(self):
         return '%s' % self.value
@@ -45,26 +48,27 @@ class Quantity:
     def setDriver(self, driver):
         self.driver = driver
 
-    def getValue(self, ch=None, **kw):
-        if ch is None:
-            ch = self.ch
+    def getValue(self, **kw):
+        # if self.driver is not None and self.get_cmd is not '':
+        #     cmd = self._formatGetCmd(**kw)
+        #     self.value = self.driver.query(cmd)
         return self.value
 
-    def setValue(self, value, unit=None, ch=None, **kw):
+    def setValue(self, value, **kw):
         self.value = value
-        if ch is None:
-            ch = self.ch
-        if unit is None:
-            unit = self.unit
         if self.driver is not None and self.set_cmd is not '':
-            cmd = self._formatSetCmd(value, unit=unit, ch=ch, **kw)
+            cmd = self._formatSetCmd(value, **kw)
             self.driver.write(cmd)
 
     def _formatGetCmd(self, **kw):
-        return self.get_cmd % dict(**kw)
+        _kw = copy.deepcopy(self.default)
+        _kw.update(**kw)
+        return self.get_cmd % dict(**_kw)
 
     def _formatSetCmd(self, value, **kw):
-        return self.set_cmd % dict(value=value, **kw)
+        _kw = copy.deepcopy(self.default)
+        _kw.update(value=value,**kw)
+        return self.set_cmd % dict(**_kw)
 
 
 class QReal(Quantity):
@@ -84,11 +88,9 @@ class QReal(Quantity):
         unit = p + self.unit
         return '%g %s' % (value, unit)
 
-    def getValue(self, ch=None, **kw):
-        if ch is None:
-            ch = self.ch
+    def getValue(self, **kw):
         if self.driver is not None and self.get_cmd is not '':
-            cmd = self._formatGetCmd(ch=ch, **kw)
+            cmd = self._formatGetCmd(**kw)
             res = self.driver.query_ascii_values(cmd)
             self.value = res[0]
         return self.value
@@ -112,10 +114,8 @@ class QInteger(QReal):
             get_cmd=get_cmd,
             set_cmd=set_cmd)
 
-    def getValue(self, ch=None, **kw):
-        if ch is None:
-            ch = self.ch
-        super(QInteger, self).getValue(ch=ch, **kw)
+    def getValue(self, **kw):
+        super(QInteger, self).getValue(**kw)
         return int(self.value)
 
 
@@ -124,11 +124,9 @@ class QString(Quantity):
         super(QString, self).__init__(
             name, value, 'String', ch=ch, get_cmd=get_cmd, set_cmd=set_cmd)
 
-    def getValue(self, ch=None, **kw):
-        if ch is None:
-            ch = self.ch
+    def getValue(self, **kw):
         if self.driver is not None and self.get_cmd is not '':
-            cmd = self._formatGetCmd(ch=ch, **kw)
+            cmd = self._formatGetCmd(**kw)
             res = self.driver.query(cmd)
             self.value = res.strip("\n\"' ")
         return self.value
@@ -156,22 +154,27 @@ class QOption(QString):
             self._opts[k] = v
             self._opts[v] = k
 
-    def setValue(self, value, ch=None, **kw):
+    def setValue(self, value, **kw):
         self.value = value
-        if ch is None:
-            ch = self.ch
         if self.driver is not None and self.set_cmd is not '':
             options = dict(self.options)
             if value not in options.keys():
                 #logger.error('%s not in %s options' % (value, self.name))
                 return
-            cmd = self.set_cmd % dict(option=options[value], ch=ch, **kw)
+            cmd = self._formatSetCmd(value, option=options[value], **kw)
+            # cmd = self.set_cmd % dict(option=options[value], **kw)
             self.driver.write(cmd)
 
-    def getIndex(self, ch=None, **kw):
-        if ch is None:
-            ch = self.ch
-        value = self.getValue(ch=ch, **kw)
+    def getValue(self, **kw):
+        if self.driver is not None and self.get_cmd is not '':
+            cmd = self._formatGetCmd(**kw)
+            res = self.driver.query(cmd)
+            res_value = res.strip("\n\"' ")
+            self.value = self._opts[res_value]
+        return self.value
+
+    def getIndex(self, **kw):
+        value = self.getValue(**kw)
         if value is None:
             return None
 
@@ -180,10 +183,8 @@ class QOption(QString):
                 return i
         return None
 
-    def getCmdOption(self, ch=None, **kw):
-        if ch is None:
-            ch = self.ch
-        value = self.getValue(ch=ch, **kw)
+    def getCmdOption(self, **kw):
+        value = self.getValue(**kw)
         if value is None:
             return None
         return dict(self.options)[value]
@@ -194,9 +195,7 @@ class QBool(QInteger):
         Quantity.__init__(
             self, name, value, 'Bool', ch=ch, get_cmd=get_cmd, set_cmd=set_cmd)
 
-    def getValue(self, ch=None, **kw):
-        if ch is None:
-            ch = self.ch
+    def getValue(self, **kw):
         return bool(super(QBool, self).getValue(ch=ch, **kw))
 
 
@@ -211,11 +210,9 @@ class QVector(Quantity):
         super(QVector, self).__init__(
             name, value, 'Vector', unit, ch, get_cmd=get_cmd, set_cmd=set_cmd)
 
-    def getValue(self, ch=None, **kw):
-        if ch is None:
-            ch = self.ch
+    def getValue(self, **kw):
         if self.driver is not None and self.get_cmd is not '':
-            cmd = self._formatGetCmd(ch=ch, **kw)
+            cmd = self._formatGetCmd(**kw)
             if kw.get('binary'):
                 res = self.driver.query_binary_values(cmd)
             else:
