@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from qulab import BaseDriver, QInteger, QOption, QReal, QString, QVector
+from qulab import visaDriver, QInteger, QOption, QReal, QString, QVector
 
 
-class Driver(BaseDriver):
+class Driver(visaDriver):
     support_models = ['IT6302']
 
     quants = [

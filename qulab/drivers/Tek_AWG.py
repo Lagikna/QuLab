@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 
-from qulab import BaseDriver, QOption, QReal, QList
+from qulab import visaDriver, QOption, QReal, QList
 
 
-class Driver(BaseDriver):
+class Driver(visaDriver):
     support_models = ['AWG5014C', 'AWG5208']
 
     quants = [
@@ -65,7 +65,7 @@ class Driver(BaseDriver):
         if quant.name == '':
             return
         else:
-            return BaseDriver.performSetValue(self, quant, value, **kw)
+            return visaDriver.performSetValue(self, quant, value, **kw)
 
     def performGetValue(self, quant, **kw):
         if quant.name == 'WList':
@@ -75,7 +75,7 @@ class Driver(BaseDriver):
             quant.value = self.sequence_list
             return self.sequence_list
         else:
-            return BaseDriver.performGetValue(self, quant, **kw)
+            return visaDriver.performGetValue(self, quant, **kw)
 
     def get_waveform_list(self):
         if self.model in ['AWG5208']:

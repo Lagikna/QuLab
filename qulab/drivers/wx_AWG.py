@@ -2,10 +2,10 @@
 import numpy as np
 import visa
 
-from qulab import BaseDriver, QOption, QReal, QList, QInteger
+from qulab import visaDriver, QOption, QReal, QList, QInteger
 
 
-class Driver(BaseDriver):
+class Driver(visaDriver):
     support_models = ['wx2184']
 
     quants = [

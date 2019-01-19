@@ -4,10 +4,10 @@ import struct
 import numpy as np
 from visa import VisaIOWarning
 
-from qulab import BaseDriver, QInteger, QOption, QReal, QString, QVector
+from qulab import visaDriver, QInteger, QOption, QReal, QString, QVector
 
 
-class Driver(BaseDriver):
+class Driver(visaDriver):
     error_command = ''
     support_models = ['SR620']
     quants = [
@@ -67,7 +67,7 @@ class Driver(BaseDriver):
                 count = 100
             return self.get_Data(count)
         else:
-            return BaseDriver.performGetValue(self, quant, **kw)
+            return visaDriver.performGetValue(self, quant, **kw)
 
     def get_Data(self, count=100):
         block = b''

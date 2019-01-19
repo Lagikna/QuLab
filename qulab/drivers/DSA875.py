@@ -2,10 +2,10 @@
 import numpy as np
 import re
 import time
-from qulab import BaseDriver, QInteger, QOption, QReal, QString, QVector
+from qulab import visaDriver, QInteger, QOption, QReal, QString, QVector
 
 
-class Driver(BaseDriver):
+class Driver(visaDriver):
     error_command = ':SYST:ERR?'
     support_models = ['DSA875']
 

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from qulab import BaseDriver, QInteger, QOption, QReal, QVector
+from qulab import visaDriver, QInteger, QOption, QReal, QVector
 
 
-class Driver(BaseDriver):
+class Driver(visaDriver):
     support_models = ['E8363B', 'E8363C', 'E5071C', 'ZNB20-2Port']
 
     quants = [

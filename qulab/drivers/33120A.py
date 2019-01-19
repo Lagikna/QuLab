@@ -2,11 +2,11 @@
 import time
 
 import numpy as np
-from qulab import BaseDriver, QInteger, QOption, QReal, QString, QVector
+from qulab import visaDriver, QInteger, QOption, QReal, QString, QVector
 
 
 # yapf: disable
-class Driver(BaseDriver):
+class Driver(visaDriver):
     error_command = ''
     support_models = ['33120A', '33220A']
     quants = [
@@ -57,7 +57,7 @@ class Driver(BaseDriver):
             self.update_waveform(2*(value-offs)/vpp, name=name)
             self.use_waveform(name, vpp=vpp, offs=offs, freq=freq)
         else:
-            BaseDriver.performSetValue(self, quant, value, **kw)
+            visaDriver.performSetValue(self, quant, value, **kw)
 
     def __del_func(self, name):
         if name in self.arb_waveforms:

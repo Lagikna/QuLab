@@ -3,10 +3,10 @@ import time
 
 import numpy as np
 
-from qulab import BaseDriver, QInteger, QOption, QReal, QString, QVector
+from qulab import visaDriver, QInteger, QOption, QReal, QString, QVector
 
 
-class Driver(BaseDriver):
+class Driver(visaDriver):
     error_command = 'LERR?'
     support_models = ['DG645']
 

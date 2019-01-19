@@ -1,11 +1,11 @@
 import numpy as np
 import time
 
-from qulab import BaseDriver
+from qulab import visaDriver
 from qulab import QReal, QOption, QInteger, QString, QVector
 
 
-class Driver(BaseDriver):
+class Driver(visaDriver):
     error_command = ':SYST:ERR?'
     surport_models = ['HP81110A']
 
