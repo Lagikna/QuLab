@@ -28,14 +28,11 @@ class Instrument(Document):
     name = StringField(max_length=50, unique=True)
     host = StringField()
     address = StringField()
-    driver = ReferenceField('Driver')
+    driver = StringField()
     created_time = ComplexDateTimeField(default=now)
 
 
 def setInstrument(name, host, address, driver):
-    driver = Driver.objects(name=driver).order_by('-version').first()
-    if driver is None:
-        raise Exception('Driver %r not exists, upload it first.' % driver)
     ins = Instrument.objects(name=name).first()
     if ins is None:
         ins = Instrument(name=name, host=host, address=address, driver=driver)
