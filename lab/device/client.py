@@ -3,7 +3,7 @@ import requests
 
 from .. import db
 from .._bootstrap import get_current_user
-from ._driver import DriverManager, parse_resource_name
+from ._driver import DriverManager
 from .protocol import DEFAULT_PORT, Transport
 
 
@@ -129,19 +129,13 @@ class InstrumentManager:
     def __init__(self, verify, hosts=[]):
         self.verify = verify
         #self._drvmgr = DriverManager(visa_backends=visa_backends)
-        self._drvmgr_py = DriverManager(visa_backends='@py')
-        try:
-            self._drvmgr_ni = DriverManager(visa_backends='@ni')
-        except:
-            self._drvmgr_ni = None
+        self._drvmgr = DriverManager()
         self._sessions = {}
         self._lab = None
         self._hosts = {'localhost'}.union(set(hosts))
 
     def get_local_resource(self, name):
-        ins = self._drvmgr_py.get(name)
-        if ins is None:
-            ins = self._drvmgr_ni.get(name)
+        ins = self._drvmgr.get(name)
         return ins
 
     def get_session(self, server, port=DEFAULT_PORT):
@@ -162,15 +156,7 @@ class InstrumentManager:
     def open_local_resource(self, instrument, timeout=10, **kwds):
         if instrument.host not in self._hosts:
             return None
-        # protocol, addr = parse_resource_name(instrument.address)
-        # if protocol in ['TCPIP','ZI']: # 'ZI'仪器不会调用这两个后端，但如果电脑没装NI，用下面那个会报错
-        #     return self._drvmgr_py.open(instrument, timeout=timeout, **kwds)
-        # else:
-        #     return self._drvmgr_ni.open(instrument, timeout=timeout, **kwds)
-        if self._drvmgr_ni is not None:
-            return self._drvmgr_ni.open(instrument, timeout=timeout, **kwds)
-        else:
-            return self._drvmgr_py.open(instrument, timeout=timeout, **kwds)
+        return self._drvmgr.open(instrument, timeout=timeout, **kwds)
 
     def open_resource(self, instrument, host=None, port=DEFAULT_PORT, timeout=10):
         if isinstance(instrument, str):

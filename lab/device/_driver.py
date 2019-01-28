@@ -16,7 +16,7 @@ log.addHandler(logging.NullHandler())
 
 
 def _load_driver(driver_name):
-    log.debug('Loading driver %s ...' % driver_data.name)
+    log.debug('Loading driver %s ...' % driver_name)
     fullname = 'qulab.drivers.%s' % driver_name
     mod = importlib.import_module(fullname)
     return getattr(mod, 'Driver')
@@ -38,8 +38,6 @@ def _parse_ats_resource_name(m, addr):
     boardID = int(m.group(4))
     return dict(
         type=type,
-        ins=None,
-        company='AlazarTech',
         model=model,
         systemID=systemID,
         boardID=boardID,
@@ -51,8 +49,6 @@ def _parse_zi_resource_name(z, addr):
     deviceID = z.group(3)
     return dict(
         type=type,
-        ins=None,
-        company='ZurichInstruments',
         model=model,
         deviceID=deviceID,
         addr=addr)
@@ -63,8 +59,6 @@ def _parse_pxi_resource_name(pxi, addr):
     SLOT = int(pxi.group(3))
     return dict(
         type=type,
-        ins=None,
-        company='KeySight',
         CHASSIS=CHASSIS,
         SLOT=SLOT,
         addr=addr)
@@ -76,8 +70,6 @@ def _parse_other_resource_name(m, addr):
     kw={key:value}
     kw.update(
         type=type,
-        ins=None,
-        company=None,
         addr=addr)
     return kw
 
