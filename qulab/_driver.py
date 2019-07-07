@@ -196,7 +196,7 @@ class QBool(QInteger):
             self, name, value, 'Bool', ch=ch, get_cmd=get_cmd, set_cmd=set_cmd)
 
     def getValue(self, **kw):
-        return bool(super(QBool, self).getValue(ch=ch, **kw))
+        return bool(super(QBool, self).getValue(**kw))
 
 
 class QVector(Quantity):
