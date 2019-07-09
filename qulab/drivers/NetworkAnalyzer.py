@@ -4,7 +4,7 @@ from qulab import BaseDriver, QInteger, QOption, QReal, QVector
 
 
 class Driver(BaseDriver):
-    support_models = ['E8363B', 'E8363C', 'E5071C', 'ZNB20-2Port']
+    support_models = ['E8363B', 'E8363C', 'E5071C', 'ZNB20-2Port', 'N5232A']
 
     quants = [
         QReal('Power', value=-20, unit='dBm', set_cmd='SOUR:POW %(value)e%(unit)s', get_cmd='SOUR:POW?'),
@@ -80,10 +80,9 @@ class Driver(BaseDriver):
         self.write('FORMAT:BORD NORM')
         if self.model in ['E5071C']:
             self.write(':FORM:DATA ASC')
-            cmd = ("CALC%d:DATA:FDATA?" % ch) if formated else ("CALC%d:DATA:SDATA?" % ch)
         else:
             self.write('FORMAT ASCII')
-            cmd = ("CALC%d:DATA? FDATA" % ch) if formated else ("CALC%d:DATA? SDATA" % ch)
+        cmd = ("CALC%d:DATA? FDATA" % ch) if formated else ("CALC%d:DATA? SDATA" % ch)
         data = np.asarray(self.query_ascii_values(cmd))
         if formated:
             if self.model in ['E5071C']:
@@ -98,7 +97,7 @@ class Driver(BaseDriver):
         '''Select the measurement'''
         if self.model in ['E5071C']:
             return
-        if self.model in ['E8363C','E8363B']:
+        if self.model in ['E8363C','E8363B', 'N5232A']:
             quote = '" '
         elif self.model in ['ZNB20-2Port']:
             quote = "' "
@@ -114,7 +113,7 @@ class Driver(BaseDriver):
         if self.model == 'E8363C':
             cmd = 'CALC:X?'
             return np.asarray(self.query_ascii_values(cmd))
-        if self.model == 'E8363B':
+        if self.model in ['E8363B','N5232A']:
             freq_star=self.getValue('Frequency start')
             freq_stop=self.getValue('Frequency stop')
             num_of_point=self.getValue('Number of points')
