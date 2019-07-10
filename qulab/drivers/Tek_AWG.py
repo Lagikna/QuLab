@@ -191,13 +191,13 @@ class Driver(BaseDriver):
     def update_marker(self, name, mk1, mk2=None, mk3=None, mk4=None, start=0, size=None):
         def format_marker_data(markers, bits):
             values = 0
-            for i, v in markers:
+            for i, v in enumerate(markers):
                 v = 0 if v is None else np.asarray(v)
                 values += v << bits[i]
             return values
 
         if self.model in ['AWG5014C']:
-            values = format_marker_data([mk1, mk2], [5,6])
+            values = format_marker_data([mk1, mk2], [6,7])
         elif self.model in ['AWG5208']:
             values = format_marker_data([mk1, mk2, mk3, mk4], [7,6,5,4])
         if size is None:

@@ -197,7 +197,7 @@ class Driver(BaseDriver):
             return values
 
         if self.model in ['AWG5014C']:
-            values = format_marker_data([mk1, mk2], [5,6])
+            values = format_marker_data([mk1, mk2], [6, 7])
         elif self.model in ['AWG5208']:
             values = format_marker_data([mk1, mk2, mk3, mk4], [7,6,5,4])
         if size is None:
