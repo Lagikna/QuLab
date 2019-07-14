@@ -42,7 +42,7 @@ class Driver(BaseDriver):
                            maxlen=512,
                            ARange=1.0,
                            BRange=1.0,
-                           trigLevel=0.0,
+                           trigLevel=0.1,
                            triggerDelay=0,
                            triggerTimeout=0,
                            bufferCount=512)
