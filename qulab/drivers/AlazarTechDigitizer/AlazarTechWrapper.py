@@ -173,7 +173,7 @@ class AlazarTechDigitizer():
     def setTriggerDelay(self, Delay=0):
         """Set the time, in sample clocks, to wait after receiving a trigger
         event before capturing a record for the trigger.
-        
+
         To convert the trigger delay from seconds to sample clocks, multiple
         the sample rate in samples per second by the trigger delay in seconds.
         The trigger delay value may be 0 to 9,999,999 samples.
@@ -187,7 +187,7 @@ class AlazarTechDigitizer():
     def setTriggerTimeOut(self, timeout=0.0):
         """Set the time to wait for a trigger event before automatically
         generating a trigger event.
-        
+
         timeout : Trigger timeout in 1 s units, or 0 to wait forever for
         a trigger event.
         """
@@ -281,7 +281,7 @@ class AlazarTechDigitizer():
     def waitAsyncBufferComplete(self, pBuffer, timeout_ms):
         """Returns when a board has received sufficient triggers to fill the
         specified buffer, or the timeout interval elapses.
-        
+
         pBuffer : Pointer to a buffer to receive sample data from the digitizer
                 board.
         timeout_ms : Specify the time to wait, in milliseconds, for the buffer
@@ -456,7 +456,7 @@ class AutoDMA:
         self.dig.setRecordSize(0, self.samplesPerRecord)
 
     def before(self):
-        flags = API.ADMA_NPT | API.ADMA_EXTERNAL_STARTCAPTURE
+        flags = API.ADMA_NPT | API.ADMA_EXTERNAL_STARTCAPTURE | API.ADMA_INTERLEAVE_SAMPLES
         if self.buffers is None:
             flags |= API.ADMA_ALLOC_BUFFERS
 
@@ -487,8 +487,8 @@ class AutoDMA:
 
         for data in _read():
             data = data - codeZero
-            chA = scaleA * data[:self.samplesPerRecord * self.recordsPerBuffer]
-            chB = scaleB * data[self.samplesPerRecord * self.recordsPerBuffer:]
+            chA = scaleA * data[::2]
+            chB = scaleB * data[1::2]
             yield chA, chB
 
     def _read(self):

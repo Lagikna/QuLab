@@ -181,6 +181,7 @@ class AlazarTechDigitizer():
         if len(errors) != 0:
             self.push_back_errors(errors)
             raise AlazarTechError(errors[-1][0], '%d, %s' % errors[-1])
+            # print(errors[-1][0], '%d, %s' % errors[-1])
 
     def push_back_errors(self, e):
         self._error_list.extend(e)
