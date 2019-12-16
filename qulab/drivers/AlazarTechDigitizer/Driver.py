@@ -1,13 +1,14 @@
 import logging
 import time
 from collections import deque
+from itertools import count
 
 import numpy as np
 
 from qulab import BaseDriver
 
 from .AlazarTechWrapper import (AlazarTechDigitizer, AutoDMA, DMABufferArray,
-                                configure)
+                                configure, initialize)
 from .exception import AlazarTechError
 
 log = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ def getExpArray(f_list, numOfPoints, weight=None, sampleRate=1e9):
         weight = np.ones(numOfPoints)
     for f in f_list:
         e.append(weight * np.exp(-1j * 2 * np.pi * f * t))
-    return np.asarray(e).T
+    return np.asarray(e).T / numOfPoints
 
 
 class Driver(BaseDriver):
@@ -45,6 +46,7 @@ class Driver(BaseDriver):
                            trigLevel=0.0,
                            triggerDelay=0,
                            triggerTimeout=0,
+                           recordsPerBuffer=64,
                            bufferCount=512)
         self.config['e'] = getExpArray(self.config['f_list'], self.config['n'],
                                        self.config['weight'],
@@ -52,6 +54,7 @@ class Driver(BaseDriver):
         self.config['samplesPerRecord'] = getSamplesPerRecode(self.config['n'])
         if config is not None:
             self.set(**config)
+        initialize(self.dig)
         configure(self.dig, **self.config)
 
     def set(self, **cmd):
@@ -59,6 +62,11 @@ class Driver(BaseDriver):
             cmd['samplesPerRecord'] = getSamplesPerRecode(cmd['n'])
 
         self.config.update(cmd)
+
+        if self.config['repeats'] % self.config['recordsPerBuffer'] != 0:
+            self.config['repeats'] = (
+                self.config['repeats'] // self.config['recordsPerBuffer'] +
+                1) * self.config['recordsPerBuffer']
 
         if any(key in ['f_list', 'n', 'weight', 'sampleRate'] for key in cmd):
             self.config['e'] = getExpArray(self.config['f_list'],
@@ -88,34 +96,47 @@ class Driver(BaseDriver):
                      timeout=timeout) as h:
             yield from h.read()
 
-    def getData(self, fft=False, avg=False):
+    def getData(self, fft=False, avg=False, timeout=None):
         samplesPerRecord = self.config['samplesPerRecord']
+        recordsPerBuffer = self.config['recordsPerBuffer']
         repeats = self.config['repeats']
         e = self.config['e']
-        maxlen = repeats if repeats > 0 else self.config['maxlen']
-        queue = deque(maxlen=maxlen)
         n = e.shape[0]
+        maxlen = self.config['maxlen']
+        if timeout is None:
+            timeout = self.timeout
+
+        A, B = [], []
 
         retry = 0
-        while retry < 3:
+        while retry < 2:
             try:
-                for chA, chB in self._aquireData(samplesPerRecord,
-                                                 repeats=repeats,
-                                                 buffers=None,
-                                                 recordsPerBuffer=1,
-                                                 timeout=1):
+                for index , (chA, chB) in zip(count(), self._aquireData(
+                        samplesPerRecord,
+                        repeats=repeats,
+                        buffers=None,
+                        recordsPerBuffer=recordsPerBuffer,
+                        timeout=timeout)):
+                    A_lst = chA.reshape((recordsPerBuffer, samplesPerRecord))
+                    B_lst = chB.reshape((recordsPerBuffer, samplesPerRecord))
                     if fft:
-                        queue.append(
-                            [chA[:n].dot(e).T / n, chB[:n].dot(e).T / n])
-                    else:
-                        queue.append([chA[:n], chB[:n]])
-                    if len(queue) >= queue.maxlen:
+                        A_lst = (A_lst[:, :n]).dot(e)
+                        B_lst = (B_lst[:, :n]).dot(e)
+                    A.append(A_lst)
+                    B.append(B_lst)
+                    if repeats == 0 and index*recordsPerBuffer >= maxlen:
                         break
+                
+                A = np.asarray(A)
+                B = np.asarray(B)
+    
+                A = A.flatten().reshape(A.shape[0]*A.shape[1], A.shape[2])
+                B = B.flatten().reshape(B.shape[0]*B.shape[1], B.shape[2])
+
                 if avg:
-                    return np.mean(np.asanyarray(queue), axis=0)
+                    return A.mean(axis=0), B.mean(axis=0)
                 else:
-                    ret = np.asanyarray(queue)
-                    return np.asarray([ret[:, 0, :], ret[:, 1, :]])
+                    return A, B
             except AlazarTechError as err:
                 log.exception(err.msg)
                 if err.code == 518:
@@ -127,8 +148,8 @@ class Driver(BaseDriver):
         else:
             raise SystemExit(1)
 
-    def getIQ(self, avg=False):
-        return self.getData(True, avg)
+    def getIQ(self, avg=False, timeout=None):
+        return self.getData(True, avg, timeout=timeout)
 
-    def getTraces(self, avg=True):
-        return self.getData(False, avg)
+    def getTraces(self, avg=True, timeout=None):
+        return self.getData(False, avg, timeout=timeout)
